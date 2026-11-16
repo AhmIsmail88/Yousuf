@@ -1,0 +1,94 @@
+TANZIL QURAN TEXT — LICENSE AND TERMS OF USE
+============================================
+https://tanzil.net/docs/Text_License
+
+The following copyright notice is applied to, and is included in all copies of
+Tanzil Quran text:
+
+------------------------------------------------------------------
+Tanzil Quran Text
+Copyright (C) 2007-2026 Tanzil Project
+License: Creative Commons Attribution 3.0
+
+This copy of the Quran text is carefully produced, highly
+verified and continuously monitored by a group of specialists
+in Tanzil Project.
+
+TERMS OF USE:
+
+- Permission is granted to copy and distribute verbatim copies
+  of this text, but CHANGING IT IS NOT ALLOWED.
+
+- This Quran text can be used in any website or application,
+  provided that its source (Tanzil Project) is clearly indicated,
+  and a link is made to tanzil.net to enable users to keep
+  track of changes.
+
+- This copyright notice shall be included in all verbatim copies
+  of the text, and shall be reproduced appropriately in all files
+  derived from or containing substantial portion of this text.
+
+Please check updates at: http://tanzil.net/updates/
+------------------------------------------------------------------
+
+Files covered by this notice
+----------------------------
+1. quran-uthmani.sql        — Tanzil Quran Text (Uthmani, Version 1.1)
+2. quran-uthmani.sqlite     — Tanzil Quran Text (Uthmani, Version 1.1), SQLite copy
+3. quran-simple-clean.sql   — Tanzil Quran Text (Simple Clean, Version 1.1)
+
+The .sql files are unmodified, verbatim copies downloaded from the official
+Tanzil download page: https://tanzil.net/download/
+quran-uthmani.sqlite was generated from quran-uthmani.sql without altering a
+single character of the text column (verified by SHA-256 of the concatenated
+text). The database also stores this notice in its `meta` table.
+Source of the text in every file: https://tanzil.net/download/
+The copyright block embedded at the top of each .sql file must not be
+removed or altered.
+
+What this means in practice
+---------------------------
+ALLOWED
+- Copy, redistribute and host these files as they are.
+- Use them in a website, mobile app, desktop app or internal system,
+  including commercial products.
+- Charge for your product or service.
+
+REQUIRED
+- Clearly credit "Tanzil Project" as the source of the Quran text.
+- Include a clickable link to https://tanzil.net/ near the credit
+  (in the app's About screen, the project README, or the site footer).
+- Keep this copyright notice in all copies, and reproduce it in any
+  derived file or product that contains a substantial portion of the text.
+
+NOT ALLOWED
+- Changing, correcting, re-diacritizing, re-arranging or otherwise
+  modifying the Quran text itself. Verbatim only.
+
+Note on the license label
+-------------------------
+The notice labels the text "Creative Commons Attribution 3.0" (CC BY 3.0).
+CC BY 3.0 by itself would permit adaptations with attribution, but the Tanzil
+Terms of Use add a stricter condition: the text must be distributed verbatim
+and must not be changed. Where the two differ, the stricter condition governs
+your use of these files. If you need to publish a modified form of the text,
+you must obtain separate permission from Tanzil Project.
+
+Separate component: Quran metadata
+----------------------------------
+quran-metadata.xml is not part of the Quran text above. It is:
+
+  Quran Metadata, version 1.0
+  Copyright (C) 2008-2009 Tanzil.info
+  License: cc-by
+  Source: https://tanzil.net/docs/Quran_Metadata
+
+It is distributed under CC BY and may be reused with attribution to Tanzil.
+
+What is NOT included
+--------------------
+- Translations (English, French, etc.) — each translation carries its own
+  separate license from its translator/publisher.
+- Tafsir (exegesis) — separately licensed.
+- Audio recitations — separately licensed.
+This package contains the Arabic Quran text only (plus structural metadata).

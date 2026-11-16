@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#2F6F7A</color>
+    <!-- ألوان الهوية (assets/الهوية والشعار.png) -->
+    <color name="brand_cream">#F6FCF5</color>
+    <color name="brand_teal">#2F6F7A</color>
+    <color name="brand_sand">#876A44</color>
+</resources>

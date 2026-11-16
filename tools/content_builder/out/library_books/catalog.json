@@ -1,0 +1,89 @@
+{
+  "format": 1,
+  "books": [
+    {
+      "slug": "sira_ibn_hisham",
+      "title": "السيرة النبوية لابن هشام",
+      "author": "عبد الملك بن هشام (ت ٢١٣هـ)",
+      "category": "سيرة",
+      "file": "sira_ibn_hisham.sqlite.gz",
+      "bytes": 1047705,
+      "sqlite_bytes": 5828608,
+      "sha256": "adec2b83fe37f5a3999bb25ff39468c02029201a3faf00217b1eb164a24ccb64",
+      "pages": 1407,
+      "chapters": 1219
+    },
+    {
+      "slug": "zad_almaad",
+      "title": "زاد المعاد في هدي خير العباد",
+      "author": "ابن قيم الجوزية (ت ٧٥١هـ)",
+      "category": "سيرة وهدي",
+      "file": "zad_almaad.sqlite.gz",
+      "bytes": 2026968,
+      "sqlite_bytes": 11378688,
+      "sha256": "44da81af60aff2a2f21feff16f354067bf1a758f37b66101709c7ee4561ee922",
+      "pages": 2628,
+      "chapters": 1085
+    },
+    {
+      "slug": "bidaya",
+      "title": "البداية والنهاية",
+      "author": "ابن كثير (ت ٧٧٤هـ)",
+      "category": "تاريخ",
+      "file": "bidaya.sqlite.gz",
+      "bytes": 5451898,
+      "sqlite_bytes": 23162880,
+      "sha256": "df4d0bcc75811e1ebc4f4333892e7a9c3877fbad41b56fd81352c34af6267a58",
+      "pages": 4918,
+      "chapters": 2565
+    },
+    {
+      "slug": "tarikh_tabari",
+      "title": "تاريخ الأمم والملوك (تاريخ الطبري)",
+      "author": "محمد بن جرير الطبري (ت ٣١٠هـ)",
+      "category": "تاريخ",
+      "file": "tarikh_tabari.sqlite.gz",
+      "bytes": 4987078,
+      "sqlite_bytes": 25157632,
+      "sha256": "cf6211700f397163b62765b815a54109a42f443b8321c2b452aa842e461de048",
+      "pages": 6431,
+      "chapters": 1696
+    },
+    {
+      "slug": "alkamil",
+      "title": "الكامل في التاريخ",
+      "author": "ابن الأثير (ت ٦٣٠هـ)",
+      "category": "تاريخ",
+      "file": "alkamil.sqlite.gz",
+      "bytes": 5208944,
+      "sqlite_bytes": 27820032,
+      "sha256": "ad1049a376fe70c79751585565cb6ba2bc5e592595c232431a926b1525047501",
+      "pages": 6163,
+      "chapters": 918
+    },
+    {
+      "slug": "asbab_suyuti",
+      "title": "لباب النقول في أسباب النزول",
+      "author": "جلال الدين السيوطي (ت ٩١١هـ)",
+      "category": "علوم القرآن",
+      "file": "asbab_suyuti.sqlite.gz",
+      "bytes": 144096,
+      "sqlite_bytes": 897024,
+      "sha256": "a4fafe46ffb6ebe5b8ded2abc805ba2b6b7e89a969aca5a96b9e873b505b6274",
+      "pages": 218,
+      "chapters": 77
+    },
+    {
+      "slug": "rahiq_makhtum",
+      "title": "الرحيق المختوم",
+      "author": "صفي الرحمن المباركفوري",
+      "category": "سيرة",
+      "file": "rahiq_makhtum.sqlite.gz",
+      "bytes": 412913,
+      "sqlite_bytes": 1806336,
+      "sha256": "0012437800c7451e980e7cefc96066765bb064a9abb82b1c0db3299ae2a64405",
+      "pages": 458,
+      "chapters": 46
+    }
+  ]
+}

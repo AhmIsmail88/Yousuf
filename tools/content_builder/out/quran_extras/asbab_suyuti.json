@@ -1,0 +1,14 @@
+{
+  "slug": "asbab_suyuti",
+  "kind": "asbab",
+  "name_ar": "لباب النقول — للسيوطي",
+  "name_en": "Lubab al-Nuqul — al-Suyuti",
+  "language": "ar",
+  "author": "جلال الدين السيوطي (ت ٩١١هـ)",
+  "file": "asbab_suyuti.sqlite.gz",
+  "bytes": 101269,
+  "sha256": "1a751291c399b4b5c16bdfd6601c5d591cd4192e480815a2dead50e6ea710410",
+  "texts": 331,
+  "linked": 352,
+  "missed": 11
+}

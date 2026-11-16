@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "quranpedia_dump_version": "2026-11-15",
+  "extras": [
+    {
+      "slug": "ibn_kathir",
+      "kind": "tafsir",
+      "name_ar": "تفسير ابن كثير",
+      "name_en": "Tafsir Ibn Kathir",
+      "language": "ar",
+      "author": "إسماعيل بن عمر بن كثير (ت ٧٧٤هـ)",
+      "file": "ibn_kathir.sqlite.gz",
+      "bytes": 5405273,
+      "sqlite_bytes": 26234880,
+      "sha256": "428a9465094ad36bbbc37374a469fca2a044e0d53467af17220b2e93a7936bd8",
+      "texts": 1911
+    },
+    {
+      "slug": "tabari",
+      "kind": "tafsir",
+      "name_ar": "جامع البيان — تفسير الطبري",
+      "name_en": "Tafsir al-Tabari",
+      "language": "ar",
+      "author": "محمد بن جرير الطبري (ت ٣١٠هـ)",
+      "file": "tabari.sqlite.gz",
+      "bytes": 8432437,
+      "sqlite_bytes": 39702528,
+      "sha256": "d91292e70d3b0560bf6a93dd4fee0f3291213140bf088cbc6f5751609386ebd1",
+      "texts": 3636
+    },
+    {
+      "slug": "en_pickthall",
+      "kind": "translation",
+      "name_ar": "الإنجليزية — Pickthall",
+      "name_en": "English — Pickthall",
+      "language": "en",
+      "author": "Marmaduke Pickthall (d. 1936)",
+      "file": "en_pickthall.sqlite.gz",
+      "bytes": 366131,
+      "sqlite_bytes": 991232,
+      "sha256": "0a479055766058c7a29a5664494e4fb3f087f96902313e39ee6e4276032f1c50",
+      "texts": 6140
+    },
+    {
+      "slug": "tr_elmalili",
+      "kind": "translation",
+      "name_ar": "التركية — Elmalılı Hamdi Yazır",
+      "name_en": "Turkish — Elmalılı Hamdi Yazır",
+      "language": "tr",
+      "author": "Elmalılı Hamdi Yazır (ö. 1942)",
+      "file": "tr_elmalili.sqlite.gz",
+      "bytes": 400504,
+      "sqlite_bytes": 1064960,
+      "sha256": "69f6c7eba6ac3a47576317e3c892cdb20ae52be558320f49bc236b796535937f",
+      "texts": 6117
+    },
+    {
+      "slug": "ur_junagarhi",
+      "kind": "translation",
+      "name_ar": "الأردية — محمد جوناگڑھی",
+      "name_en": "Urdu — Muhammad Junagarhi",
+      "language": "ur",
+      "author": "محمد جوناگڑھی (1941)",
+      "file": "ur_junagarhi.sqlite.gz",
+      "bytes": 450125,
+      "sqlite_bytes": 1638400,
+      "sha256": "94f996ce82261fdffd46085625464a23e520e9e7d283cbaed66294959d9033e9",
+      "texts": 6208
+    }
+  ]
+}

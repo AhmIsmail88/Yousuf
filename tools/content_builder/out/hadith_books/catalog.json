@@ -1,0 +1,82 @@
+{
+  "format": 1,
+  "books": [
+    {
+      "slug": "bukhari",
+      "name_ar": "صحيح البخاري",
+      "name_en": "Sahih al-Bukhari",
+      "file": "bukhari.sqlite.gz",
+      "bytes": 2379568,
+      "sqlite_bytes": 12324864,
+      "sha256": "1a34221b35eb90a58761180f5da132670b6bc75af60016a69e7ed25b1e20badb",
+      "count": 7580,
+      "graded": false
+    },
+    {
+      "slug": "muslim",
+      "name_ar": "صحيح مسلم",
+      "name_en": "Sahih Muslim",
+      "file": "muslim.sqlite.gz",
+      "bytes": 1972432,
+      "sqlite_bytes": 10670080,
+      "sha256": "e68581322c664e050584f32e2461603c581da6cd5d3056127c56348ad581bdbc",
+      "count": 7360,
+      "graded": false
+    },
+    {
+      "slug": "abudawud",
+      "name_ar": "سنن أبي داود",
+      "name_en": "Sunan Abi Dawud",
+      "file": "abudawud.sqlite.gz",
+      "bytes": 1753038,
+      "sqlite_bytes": 8867840,
+      "sha256": "e25e6b222ec6c21321b18c2b1d34eb697a7413713496af124053ef4f50b4402e",
+      "count": 5272,
+      "graded": true
+    },
+    {
+      "slug": "tirmidhi",
+      "name_ar": "جامع الترمذي",
+      "name_en": "Jami at-Tirmidhi",
+      "file": "tirmidhi.sqlite.gz",
+      "bytes": 1590576,
+      "sqlite_bytes": 9007104,
+      "sha256": "3ce48ad30ded30a6d126838898c9afd94eb8900e043f1ad1c92e3bf984692fe3",
+      "count": 3924,
+      "graded": true
+    },
+    {
+      "slug": "nasai",
+      "name_ar": "سنن النسائي",
+      "name_en": "Sunan an-Nasai",
+      "file": "nasai.sqlite.gz",
+      "bytes": 1509093,
+      "sqlite_bytes": 8396800,
+      "sha256": "1fac3948874b818551af571239a411648fbde54fdc0e1cf41534170fe57e1410",
+      "count": 5679,
+      "graded": true
+    },
+    {
+      "slug": "ibnmajah",
+      "name_ar": "سنن ابن ماجه",
+      "name_en": "Sunan Ibn Majah",
+      "file": "ibnmajah.sqlite.gz",
+      "bytes": 1270354,
+      "sqlite_bytes": 6524928,
+      "sha256": "b4a333bdd392efd2ce931b666aa39f2668f69138b8c61fc94e2d9943dc7e1fc7",
+      "count": 4338,
+      "graded": true
+    },
+    {
+      "slug": "malik",
+      "name_ar": "موطأ مالك",
+      "name_en": "Muwatta Malik",
+      "file": "malik.sqlite.gz",
+      "bytes": 546453,
+      "sqlite_bytes": 2678784,
+      "sha256": "a4a26f8f1bc0be048ae41a619f5de22770980df47c8c066b9692627d3497f2ab",
+      "count": 1829,
+      "graded": true
+    }
+  ]
+}
