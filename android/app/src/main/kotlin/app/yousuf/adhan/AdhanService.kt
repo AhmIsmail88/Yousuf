@@ -1,8 +1,10 @@
 package app.yousuf.adhan
 
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
@@ -24,6 +26,8 @@ import java.io.File
  * - تطلب أولوية الصوت (AudioFocus)، فإن رُفضت (مكالمة/منبّه آخر) تكتفي بإشعار.
  * - «تكبير فقط» يوقف الصوت بعد [TAKBIR_MS] بتلاشٍ هادئ.
  * - تفقد الصوت عند بدء مكالمة فتتوقف فوراً.
+ * - إيقاف سهل: زر «إيقاف» في الإشعار، أو زر التشغيل (انطفاء الشاشة)، أو أحد
+ *   زرّي الصوت — كما في تطبيقات المنبّه.
  *
  * الأصوات: `adhan/<soundId>.mp3` ثم `.ogg`، وإن لم يوجد `adhan/placeholder.ogg`.
  */
@@ -88,6 +92,40 @@ class AdhanService : Service() {
     private var player: MediaPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
     private var focusRequest: AudioFocusRequest? = null
+    private var stopKeysRegistered = false
+    private var playStartedAt = 0L
+
+    /** زر التشغيل أو زرّا الصوت يوقفان الأذان (بعد ثانية من بدئه). */
+    private val stopKeys = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (player == null) return
+            if (System.currentTimeMillis() - playStartedAt < 1_000L) return
+            Log.i(TAG, "إيقاف الأذان بزر: ${intent.action}")
+            stopPlayback()
+        }
+    }
+
+    private fun registerStopKeys() {
+        if (stopKeysRegistered) return
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            // يُبثّ عند ضغط زرّي الصوت (غير موثّق رسمياً لكنه مستقر منذ سنوات).
+            addAction("android.media.VOLUME_CHANGED_ACTION")
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(stopKeys, filter, Context.RECEIVER_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(stopKeys, filter)
+        }
+        stopKeysRegistered = true
+    }
+
+    private fun unregisterStopKeys() {
+        if (!stopKeysRegistered) return
+        runCatching { unregisterReceiver(stopKeys) }
+        stopKeysRegistered = false
+    }
 
     private val focusListener = AudioManager.OnAudioFocusChangeListener { change ->
         if (change == AudioManager.AUDIOFOCUS_LOSS ||
@@ -130,6 +168,8 @@ class AdhanService : Service() {
             stopPlayback()
             return START_NOT_STICKY
         }
+        playStartedAt = System.currentTimeMillis()
+        registerStopKeys()
         scheduleStop(if (mode == "takbir") TAKBIR_MS else MAX_PLAYBACK_MS)
         return START_NOT_STICKY
     }
@@ -280,6 +320,7 @@ class AdhanService : Service() {
     }
 
     private fun stopPlayback() {
+        unregisterStopKeys()
         stopPlayer()
         abandonFocus()
         setPlaying(false)
@@ -288,6 +329,7 @@ class AdhanService : Service() {
     }
 
     override fun onDestroy() {
+        unregisterStopKeys()
         stopPlayer()
         abandonFocus()
         setPlaying(false)

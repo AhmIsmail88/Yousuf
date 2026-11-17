@@ -107,7 +107,7 @@ void main() {
     expect(map['highLatRule'], 'middle_of_the_night');
     expect(map['timezoneId'], 'Asia/Riyadh');
     expect(map['prePrayerAlertMinutes'], 15);
-    expect(map['respectSilentMode'], isTrue);
+    expect(map['respectSilentMode'], isFalse);
     expect((map['adjustments'] as Map)['fajr'], 0);
     final sounds = map['prayerSounds'] as Map;
     expect((sounds['fajr'] as Map)['sound'], 'abdelbaset');

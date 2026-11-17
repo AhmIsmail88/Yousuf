@@ -54,7 +54,7 @@ class PrayerSettings {
     this.prayerSounds = PrayerSound.defaults,
     this.prePrayerAlertMinutes = 15,
     this.iqamaReminderMinutes = 0,
-    this.respectSilentMode = true,
+    this.respectSilentMode = false,
     this.hijriOffsetDays = 0,
   });
 
@@ -140,7 +140,10 @@ class PrayerSettingsRepository {
   static const _kHighLat = 'prayer.high_lat';
   static const _kPreAlert = 'prayer.pre_alert_minutes';
   static const _kIqama = 'prayer.iqama_minutes';
-  static const _kSilent = 'prayer.respect_silent';
+
+  /// «كتم الأذان في الوضع الصامت» — اختياري ومطفأ افتراضياً: الأذان بصوت دائماً.
+  /// (المفتاح القديم prayer.respect_silent كان مفعّلاً افتراضياً ويُترك.)
+  static const _kSilent = 'prayer.silent_mutes_adhan';
   static const _kHijriOffset = 'prayer.hijri_offset';
 
   static String _adjKey(String prayer) => 'prayer.adjustment.$prayer';
@@ -184,7 +187,7 @@ class PrayerSettingsRepository {
       },
       prePrayerAlertMinutes: _prefs.getInt(_kPreAlert) ?? 15,
       iqamaReminderMinutes: _prefs.getInt(_kIqama) ?? 0,
-      respectSilentMode: _prefs.getBool(_kSilent) ?? true,
+      respectSilentMode: _prefs.getBool(_kSilent) ?? false,
       hijriOffsetDays: (_prefs.getInt(_kHijriOffset) ?? 0).clamp(-2, 2),
     );
   }

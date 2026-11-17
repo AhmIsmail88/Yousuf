@@ -57,8 +57,8 @@ class MoreScreen extends StatelessWidget {
             '/hadith',
           ),
           _Entry(
-            Icons.history_edu_outlined,
-            context.tr('السيرة والتاريخ', 'Seerah & history'),
+            Icons.local_library_outlined,
+            context.tr('المكتبة', 'Library'),
             '/history',
           ),
           _Entry(

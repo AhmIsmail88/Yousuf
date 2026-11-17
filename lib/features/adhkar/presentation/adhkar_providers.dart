@@ -28,8 +28,8 @@ final adhkarCategoriesProvider = FutureProvider<List<DhikrCategory>>((
 });
 
 /// الأقسام التي تظهر كشرائح سريعة — بالترتيب المطلوب.
+/// أبواب «حصن المسلم» أولاً، ثم «أدعية من القرآن».
 const featuredAdhkarSlugs = <String>[
-  'quranic',
   'morning',
   'evening',
   'wake',
@@ -37,7 +37,12 @@ const featuredAdhkarSlugs = <String>[
   'after_prayer',
   'distress',
   'travel',
+  'quranic',
 ];
+
+/// الباب الذي يفتح عليه التبويب: أذكار الصباح حتى العصر تقريباً (٣ م)،
+/// ثم أذكار المساء.
+String defaultAdhkarSlug(DateTime now) => now.hour < 15 ? 'morning' : 'evening';
 
 /// الأقسام المميزة الموجودة فعلاً في القاعدة (بترتيب [featuredAdhkarSlugs]).
 final featuredAdhkarCategoriesProvider = FutureProvider<List<DhikrCategory>>((
@@ -81,7 +86,7 @@ class AdhkarSelection extends Notifier<String> {
   static const String allSources = '__all__';
 
   @override
-  String build() => featuredAdhkarSlugs.first;
+  String build() => defaultAdhkarSlug(DateTime.now());
 
   void select(String source) => state = source;
 }

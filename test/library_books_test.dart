@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -8,13 +9,30 @@ import 'package:yousuf/features/history/domain/library_catalog.dart';
 
 /// كتب المكتبة: الفهرس، وقراءة ملف كتاب منزَّل بصيغة library_books.py.
 void main() {
-  test('فهرس المكتبة: سبعة كتب ببصمات وروابط', () {
+  test('فهرس المكتبة: الكتب ببصمات وروابط وتبويبات', () {
     expect(libraryCatalog.map((b) => b.slug), contains('rahiq_makhtum'));
-    expect(libraryCatalog, hasLength(7));
+    expect(libraryCatalog, hasLength(17));
     for (final book in libraryCatalog) {
       expect(book.sha256, matches(RegExp(r'^[0-9a-f]{64}$')));
       expect(book.url, endsWith('/${book.slug}.sqlite.gz'));
-      expect(book.pages, greaterThan(100));
+      expect(book.pages, greaterThan(10));
+      expect(librarySections, contains(book.section));
+    }
+    expect(
+      libraryCatalog.where((b) => b.section == 'الأذكار').map((b) => b.slug),
+      ['adhkar_nawawi', 'kalim_tayyib', 'wabil_sayyib'],
+    );
+  });
+
+  test('الفهرس مطابق لناتج library_books.py (البصمة والحجم والتبويب)', () {
+    final file = File('tools/content_builder/out/library_books/catalog.json');
+    final books = (jsonDecode(file.readAsStringSync()) as Map)['books'] as List;
+    expect(books, hasLength(libraryCatalog.length));
+    for (final raw in books.cast<Map<String, dynamic>>()) {
+      final book = libraryCatalog.firstWhere((b) => b.slug == raw['slug']);
+      expect(book.sha256, raw['sha256'], reason: book.slug);
+      expect(book.bytes, raw['bytes'], reason: book.slug);
+      expect(book.section, raw['section'], reason: book.slug);
     }
   });
 

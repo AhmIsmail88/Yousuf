@@ -18,15 +18,19 @@ import 'speech_channel.dart';
 /// على تلاوة القرآن، محوَّل إلى ggml بأداة `tools/asr/convert_to_ggml.py`،
 /// ويعمل عبر whisper.cpp دون إنترنت. صوت المستخدم لا يغادر الهاتف (SPEC §10).
 ///
-/// يُنزَّل النموذج مرة واحدة عند أول استخدام (≈١٤٨ م.ب) ويُتحقق من بصمته.
+/// يُنزَّل النموذج مرة واحدة عند أول استخدام (≈٨٢ م.ب) ويُتحقق من بصمته.
 ///
 /// الواجهة مطابقة لـ [SpeechChannel] (availability/start/stop/events) حتى
 /// تستخدمه شاشتا المصحف والأطفال دون تغيير منطقهما.
 class QuranRecognizer {
   QuranRecognizer();
 
-  /// اسم ملف النموذج على الجهاز.
-  static const String modelFileName = 'ggml-tarteel-base-quran.bin';
+  /// اسم ملف النموذج على الجهاز: نسخة q8_0 المضغوطة (٨٢ م.ب) — النص نفسه
+  /// حرفياً على تلاوات الاختبار، وأسرع بنحو ٤٠٪ على الهاتف من نسخة f16.
+  static const String modelFileName = 'ggml-tarteel-base-quran-q8.bin';
+
+  /// نسخة f16 القديمة (١٤٨ م.ب) — تُحذف بعد تنزيل النسخة الجديدة.
+  static const String legacyModelFileName = 'ggml-tarteel-base-quran.bin';
 
   /// رابط تنزيل النموذج — مستودع المشروع على Hugging Face (رخصة Apache-2.0).
   /// يمكن تغييره وقت البناء: `--dart-define=QURAN_ASR_MODEL_URL=...`.
@@ -34,18 +38,18 @@ class QuranRecognizer {
     'QURAN_ASR_MODEL_URL',
     defaultValue:
         'https://huggingface.co/Ahm20/yousuf-quran-asr/resolve/main/'
-        'ggml-tarteel-base-quran.bin',
+        'ggml-tarteel-base-quran-q8.bin',
   );
 
   /// بصمة SHA-256 للملف المعتمد — يُرفض أي ملف منزَّل لا يطابقها.
   static const String modelSha256 = String.fromEnvironment(
     'QURAN_ASR_MODEL_SHA256',
     defaultValue:
-        'aaebca10e2a65a6dda073a6b3ac59900f91887628acf872c565a0198ee850ead',
+        '72194195f7d280adebec57acf2c6e01e209484322ec1cec21c275a3c0b1e3d77',
   );
 
   /// الحجم التقريبي للعرض.
-  static const int approxMegabytes = 148;
+  static const int approxMegabytes = 82;
 
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
 
@@ -70,8 +74,26 @@ class QuranRecognizer {
   /// صوت ١٦ كيلوهرتز أحادي ١٦ بت: ٣٢٠٠٠ بايت في الثانية.
   static const int _bytesPerSecond = 32000;
 
-  /// طول المقطع الذي يُفرَّغ كل مرة (آخر ثوانٍ من التلاوة).
+  /// طول المقطع الذي يُفرَّغ كل مرة في المصحف (آخر ثوانٍ من التلاوة).
   static const Duration liveWindow = Duration(seconds: 6);
+
+  // إعدادات الجلسة الحية الحالية (تُضبط في [startLive]).
+  Duration _window = liveWindow;
+  Duration _silenceStop = const Duration(seconds: 8);
+  Duration _step = const Duration(milliseconds: 800);
+  Duration _noSpeechStop = const Duration(seconds: 15);
+
+  /// مستوى ضجيج الغرفة (dBFS) — يتكيّف: الكلام ما يعلوه بوضوح.
+  double? _noiseFloor;
+  int _calibrationChunks = 0;
+
+  /// هل حُمِّل النموذج في الذاكرة (أول تفريغ يحمّله ~١ ث)؟
+  static bool _warm = false;
+  String? _prompt;
+
+  /// نص يسبق التفريغ (الكلمات المتلوّة قبل المقطع) — يساعد النموذج على
+  /// متابعة التلاوة. **لا** يوضع فيه ما لم يُتلَ بعد حتى لا يُكمله النموذج.
+  set prompt(String? value) => _prompt = value;
 
   /// أحداث التعرّف (نصوص جزئية ونهائية وأخطاء).
   Stream<SpeechEvent> get events => _events.stream;
@@ -87,7 +109,7 @@ class QuranRecognizer {
   static Future<bool> isModelReady() async {
     if (!isSupported) return false;
     final file = await modelFile();
-    return file.existsSync() && file.lengthSync() > 50 * 1024 * 1024;
+    return file.existsSync() && file.lengthSync() > 40 * 1024 * 1024;
   }
 
   Future<SpeechAvailability> availability() async {
@@ -138,11 +160,14 @@ class QuranRecognizer {
         throw const HttpException('تنزيل ناقص');
       }
       if (modelSha256.isNotEmpty) {
-        // بصمة بالتدفق: لا نحمّل ١٤٨ م.ب في الذاكرة دفعة واحدة.
+        // بصمة بالتدفق: لا نحمّل عشرات الميغابايت في الذاكرة دفعة واحدة.
         final digest = (await sha256.bind(temp.openRead()).first).toString();
         if (digest != modelSha256) throw StateError('بصمة النموذج غير مطابقة');
       }
       await temp.rename(file.path);
+      // النسخة القديمة الأكبر لم تعد مستعملة.
+      final legacy = File('${file.parent.path}/$legacyModelFileName');
+      if (legacy.existsSync()) legacy.deleteSync();
       return true;
     } catch (error) {
       debugPrint('[YousufAsr] فشل تنزيل النموذج: $error');
@@ -211,10 +236,20 @@ class QuranRecognizer {
     }
   }
 
-  /// استماع متواصل: يُفرَّغ آخر [liveWindow] من التلاوة كل ثانيتين تقريباً
-  /// ويُرسل نصه حدثاً جزئياً، فيكشف المصحف الكلمات أولاً بأول دون انتظار
-  /// نهاية الآية. يتوقف بالضغط على «أوقف»، أو بعد سكوت ٨ ثوانٍ، أو ٥ دقائق.
-  Future<bool> startLive() async {
+  /// استماع متواصل: يُفرَّغ آخر [window] من التلاوة كلما تجمّع [step] جديد،
+  /// ويُرسل نصه حدثاً جزئياً، فيُكشف ما تُلي أولاً بأول دون انتظار النهاية.
+  /// يتوقف بالضغط على «أوقف»، أو بعد سكوت [silenceStop] (فيُرسل النص
+  /// النهائي)، أو بعد ٥ دقائق.
+  ///
+  /// المصحف: نافذة قصيرة (٦ ث) تتابع التلاوة. الأطفال: نافذة الآية كلها
+  /// (حتى ٢٨ ث) وسكوت قصير، فتظهر الآية فور اكتمالها أو يُقال «خطأ» سريعاً.
+  Future<bool> startLive({
+    Duration window = liveWindow,
+    Duration silenceStop = const Duration(seconds: 8),
+    Duration step = const Duration(milliseconds: 800),
+    Duration noSpeechStop = const Duration(seconds: 15),
+    String? prompt,
+  }) async {
     if (!isSupported) return false;
     await cancel();
     final recorder = AudioRecorder();
@@ -246,11 +281,18 @@ class QuranRecognizer {
       );
       _recorder = recorder;
       _live = true;
+      _window = window;
+      _silenceStop = silenceStop;
+      _step = step;
+      _noSpeechStop = noSpeechStop;
+      _prompt = prompt;
       _pcm.clear();
       _pcmBytes = 0;
       _transcribedUpTo = 0;
       _spoke = false;
       _quietSince = null;
+      _noiseFloor = null;
+      _calibrationChunks = 0;
       _liveBegan = DateTime.now();
       _pcmSub = stream.listen(_onPcm);
       _liveTimer = Timer.periodic(
@@ -258,6 +300,8 @@ class QuranRecognizer {
         (_) => unawaited(_liveTick()),
       );
       debugPrint('[YousufAsr] بدأ الاستماع المتواصل');
+      if (!_warm) unawaited(_warmUp());
+      unawaited(_sweepStaleAudio());
       _events.add(
         const SpeechEvent(type: SpeechEventKind.started, onDevice: true),
       );
@@ -285,7 +329,23 @@ class QuranRecognizer {
     }
     final rms = samples == 0 ? 0.0 : math.sqrt(sum / samples);
     final db = rms <= 0 ? -100.0 : 20 * math.log(rms / 32768) / math.ln10;
-    if (db > -40) {
+    // أرضية الضجيج: تنزل فوراً مع الهدوء وتصعد ببطء — فضجيج الغرفة الثابت
+    // (مروحة، مكيّف) لا يُعدّ كلاماً، والنموذج لا يُفرِّغ الضجيج فيتخيّل كلاماً.
+    // أول نصف ثانية تقريباً تقيس ضجيج الغرفة (قبل أن يبدأ الطفل الكلام).
+    final floor = _noiseFloor;
+    if (floor == null || _calibrationChunks < 4) {
+      _calibrationChunks++;
+      _noiseFloor = floor == null ? db : math.min(floor, db);
+      return;
+    }
+    final speaking = db > -50 && db > floor + 12;
+    if (db < floor) {
+      _noiseFloor = db;
+    } else if (!speaking) {
+      // يصعد مع الضجيج فقط، لا مع الكلام.
+      _noiseFloor = floor + 0.05 * (db - floor);
+    }
+    if (speaking) {
       if (!_spoke) {
         _spoke = true;
         _events.add(
@@ -302,19 +362,82 @@ class QuranRecognizer {
     if (!_live) return;
     final now = DateTime.now();
     final quiet =
-        _quietSince != null &&
-        now.difference(_quietSince!) > const Duration(seconds: 8);
+        _quietSince != null && now.difference(_quietSince!) > _silenceStop;
     final tooLong =
         _liveBegan != null &&
         now.difference(_liveBegan!) > const Duration(minutes: 5);
-    if (quiet || tooLong) {
+    // لم يبدأ الكلام أصلاً: نتوقف ونُرسل نتيجة فارغة («لم أسمعك»).
+    final silentStart =
+        !_spoke &&
+        _liveBegan != null &&
+        now.difference(_liveBegan!) > _noSpeechStop;
+    if (quiet || tooLong || silentStart) {
       await stop();
       return;
     }
-    // نفرّغ حين يتجمّع ٠٫٨ ثانية جديدة على الأقل بعد بدء الكلام.
+    // نفرّغ حين يتجمّع [_step] جديد على الأقل بعد بدء الكلام.
     if (_busy || !_spoke) return;
-    if (_pcmBytes - _transcribedUpTo < (_bytesPerSecond * 0.8).round()) return;
+    final stepBytes = _bytesPerSecond * _step.inMilliseconds ~/ 1000;
+    if (_pcmBytes - _transcribedUpTo < stepBytes) return;
     await _transcribeTail(SpeechEventKind.partial);
+  }
+
+  /// يحمّل النموذج في الذاكرة بتفريغ ثانية صامتة، أثناء ما يستعد المستخدم
+  /// للكلام — فلا يتأخر أول تفريغ حقيقي بزمن التحميل.
+  /// يحذف مقاطع مؤقتة بقيت من جلسات قُطعت (إغلاق التطبيق أثناء التفريغ).
+  /// الأقدم من دقيقتين فقط، حتى لا يُمسّ ملف جلسة جارية.
+  Future<void> _sweepStaleAudio() async {
+    try {
+      final dir = await getTemporaryDirectory();
+      final cutoff = DateTime.now().subtract(const Duration(minutes: 2));
+      for (final entity in dir.listSync()) {
+        if (entity is! File) continue;
+        final name = entity.uri.pathSegments.last;
+        final ours =
+            name.startsWith('live_') ||
+            name.startsWith('warm_') ||
+            name.startsWith('recitation_');
+        if (!ours || !name.contains('.wav')) continue;
+        if (entity.lastModifiedSync().isBefore(cutoff)) entity.deleteSync();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _warmUp() async {
+    if (_busy || _warm) return;
+    _busy = true;
+    final dir = await getTemporaryDirectory();
+    final path =
+        '${dir.path}/warm_${DateTime.now().microsecondsSinceEpoch}.wav';
+    try {
+      await File(path)
+          .writeAsBytes(_wav(Uint8List(_bytesPerSecond)), flush: true);
+      final model = await modelFile();
+      final watch = Stopwatch()..start();
+      await const Whisper(model: WhisperModel.base).transcribe(
+        modelPath: model.path,
+        transcribeRequest: TranscribeRequest(
+          audio: path,
+          language: 'ar',
+          isNoTimestamps: true,
+          noContext: true,
+          suppressNonSpeechTokens: true,
+          keepModelLoaded: true,
+          speedUp: true,
+          noFallback: true,
+          threads: Platform.numberOfProcessors.clamp(2, 6),
+        ),
+      );
+      _warm = true;
+      debugPrint('[YousufAsr] حُمِّل النموذج (${watch.elapsedMilliseconds}ms)');
+    } catch (error) {
+      debugPrint('[YousufAsr] تعذّر تحميل النموذج مسبقاً: $error');
+    } finally {
+      try {
+        File(path).deleteSync();
+      } catch (_) {}
+      _busy = false;
+    }
   }
 
   /// يفرّغ آخر [liveWindow] من الصوت المسجَّل ويرسل النص بنوع [kind].
@@ -322,7 +445,7 @@ class QuranRecognizer {
     if (_busy) return;
     _busy = true;
     final end = _pcmBytes;
-    final windowBytes = _bytesPerSecond * liveWindow.inSeconds;
+    final windowBytes = _bytesPerSecond * _window.inMilliseconds ~/ 1000;
     final pcm = _tail(math.min(end, windowBytes));
     _transcribedUpTo = end;
     final dir = await getTemporaryDirectory();
@@ -350,11 +473,16 @@ class QuranRecognizer {
           keepModelLoaded: true,
           // مرمِّز بطول المقطع الفعلي (رقعة packages/whisper_ggml).
           speedUp: true,
+          noFallback: true,
+          initialPrompt: _prompt,
           threads: Platform.numberOfProcessors.clamp(2, 6),
         ),
       );
       final text = response.text.trim();
-      debugPrint('[YousufAsr] ($kind ${watch.elapsedMilliseconds}ms) $text');
+      debugPrint(
+        '[YousufAsr] ($kind ${watch.elapsedMilliseconds}ms '
+        '${(pcm.length / _bytesPerSecond).toStringAsFixed(1)}s) $text',
+      );
       _events.add(SpeechEvent(type: kind, text: text, onDevice: true));
     } catch (error) {
       debugPrint('[YousufAsr] فشل التفريغ: $error');
@@ -508,6 +636,8 @@ class QuranRecognizer {
           noContext: true,
           suppressNonSpeechTokens: true,
           keepModelLoaded: true,
+          speedUp: true,
+          noFallback: true,
           threads: Platform.numberOfProcessors.clamp(2, 6),
         ),
       );
@@ -555,6 +685,7 @@ class QuranRecognizer {
 
   /// تحرير النموذج من الذاكرة (عند الخروج من وضع الحفظ).
   Future<void> release() async {
+    _warm = false;
     await cancel();
     try {
       await const Whisper(model: WhisperModel.base).releaseModel();

@@ -83,12 +83,15 @@ class Whisper {
             ? null
             : NativeCallable<Void Function(Int32)>.listener(onProgress);
     try {
-      final WhisperAudioConvert converter = WhisperAudioConvert(
-        audioInput: File(transcribeRequest.audio),
-        audioOutput: File('${transcribeRequest.audio}.wav'),
-      );
-
-      final File? convertedFile = await converter.convert();
+      // Yousuf patch: a 16 kHz mono PCM16 WAV is already what whisper.cpp
+      // reads — skip the FFmpeg conversion (it costs hundreds of ms per call).
+      final File input = File(transcribeRequest.audio);
+      final File? convertedFile = _isWhisperWav(input)
+          ? input
+          : await WhisperAudioConvert(
+              audioInput: input,
+              audioOutput: File('${transcribeRequest.audio}.wav'),
+            ).convert();
 
       final TranscribeRequest req = transcribeRequest.copyWith(
         audio: convertedFile?.path ?? transcribeRequest.audio,
@@ -111,6 +114,31 @@ class Whisper {
       rethrow;
     } finally {
       progressCallable?.close();
+    }
+  }
+
+  /// RIFF/WAVE, PCM (1), mono, 16 kHz, 16-bit.
+  static bool _isWhisperWav(File file) {
+    try {
+      final RandomAccessFile raf = file.openSync();
+      try {
+        final List<int> h = raf.readSync(44);
+        if (h.length < 44) return false;
+        String tag(int at) => String.fromCharCodes(h.sublist(at, at + 4));
+        int u16(int at) => h[at] | (h[at + 1] << 8);
+        int u32(int at) =>
+            h[at] | (h[at + 1] << 8) | (h[at + 2] << 16) | (h[at + 3] << 24);
+        return tag(0) == 'RIFF' &&
+            tag(8) == 'WAVE' &&
+            u16(20) == 1 &&
+            u16(22) == 1 &&
+            u32(24) == 16000 &&
+            u16(34) == 16;
+      } finally {
+        raf.closeSync();
+      }
+    } catch (_) {
+      return false;
     }
   }
 

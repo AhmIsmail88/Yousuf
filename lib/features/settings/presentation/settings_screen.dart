@@ -763,11 +763,18 @@ class _AdhanSection extends ConsumerWidget {
         SwitchListTile(
           dense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          title: Text(context.tr('احترام الوضع الصامت', 'Respect silent mode')),
+          title: Text(
+            context.tr(
+              'كتم الأذان في الوضع الصامت',
+              'Mute adhan in silent mode',
+            ),
+          ),
           subtitle: Text(
             context.tr(
-              'إشعار بلا صوت إن كان الهاتف صامتاً',
-              'Notification without sound when the phone is silent',
+              'مطفأ: الأذان بصوت دائماً. مفعّل: إشعار بلا صوت إن كان الهاتف '
+                  'صامتاً أو على «عدم الإزعاج» (الاهتزاز لا يكتمه).',
+              'Off: the adhan always sounds. On: a silent notification when '
+                  'the phone is silent or on Do Not Disturb (vibrate does not mute).',
             ),
           ),
           value: settings.respectSilentMode,
@@ -778,10 +785,12 @@ class _AdhanSection extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
           child: Text(
             context.tr(
-              'أثناء المكالمات يصلك إشعار بلا صوت. التنبيه قبل الصلاة '
-                  'وتذكير الإقامة بصوت إشعار الهاتف فقط.',
-              'During calls you get a silent notification. Pre-prayer and '
-                  'iqama reminders use the phone notification sound only.',
+              'لإيقاف الأذان: زر «إيقاف» في الإشعار، أو زر التشغيل، أو أحد '
+                  'زرّي الصوت. أثناء المكالمات يصلك إشعار بلا صوت. التنبيه قبل '
+                  'الصلاة وتذكير الإقامة بصوت إشعار الهاتف فقط.',
+              'To stop the adhan: the Stop button, the power button or a volume '
+                  'key. During calls you get a silent notification. Pre-prayer '
+                  'and iqama reminders use the phone notification sound only.',
             ),
             style: Theme.of(context).textTheme.labelSmall,
           ),

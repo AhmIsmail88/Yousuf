@@ -73,10 +73,15 @@ object AdhanNotifications {
             audio.mode == AudioManager.MODE_RINGTONE
     }
 
-    /** هل الهاتف صامت أو على الاهتزاز؟ */
+    /**
+     * هل الهاتف صامت فعلاً؟ الاهتزاز **ليس** صامتاً: من يضع هاتفه على الاهتزاز
+     * لا يريد أن يفوته الأذان. «عدم الإزعاج» يُعدّ صامتاً.
+     */
     fun isSilentMode(context: Context): Boolean {
         val audio = context.getSystemService(AudioManager::class.java) ?: return false
-        return audio.ringerMode != AudioManager.RINGER_MODE_NORMAL
+        if (audio.ringerMode == AudioManager.RINGER_MODE_SILENT) return true
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return false
+        return manager.currentInterruptionFilter > NotificationManager.INTERRUPTION_FILTER_ALL
     }
 
     private fun openAppIntent(context: Context): PendingIntent = PendingIntent.getActivity(
@@ -113,6 +118,7 @@ object AdhanNotifications {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setOngoing(true)
+            .setContentText("للإيقاف: زر «إيقاف» أو زر التشغيل أو أحد زرّي الصوت")
             .addAction(R.drawable.ic_stat_yousuf, "إيقاف", stopIntent)
             .setDeleteIntent(stopIntent)
             .build()

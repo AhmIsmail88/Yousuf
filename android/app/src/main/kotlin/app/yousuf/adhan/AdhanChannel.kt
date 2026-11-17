@@ -42,6 +42,9 @@ class AdhanChannel private constructor(private val context: Context) :
         /** شاشات «التشغيل التلقائي» لدى الشركات التي تقتل المنبّهات. */
         private val AUTOSTART_INTENTS = listOf(
             ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"),
+            // أونر (MagicOS) انفصلت عن هواوي بحزمة مستقلة: «تشغيل التطبيقات».
+            ComponentName("com.hihonor.systemmanager", "com.hihonor.systemmanager.appcontrol.activity.StartupAppControlActivity"),
+            ComponentName("com.hihonor.systemmanager", "com.hihonor.systemmanager.startupmgr.ui.StartupNormalAppListActivity"),
             ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"),
             ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"),
             ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"),
@@ -87,6 +90,7 @@ class AdhanChannel private constructor(private val context: Context) :
             "requestExactAlarm" -> result.success(openExactAlarmSettings())
 
             "openBatterySettings" -> result.success(openBatterySettings())
+            "openSoundSettings" -> result.success(openSoundSettings())
 
             "openAutostartSettings" -> result.success(openAutostartSettings())
 
@@ -178,7 +182,26 @@ class AdhanChannel private constructor(private val context: Context) :
             "availableSounds" to AdhanService.availableSounds(context),
             "manufacturer" to Build.MANUFACTURER.lowercase(),
             "autostartSettingsAvailable" to (findAutostartIntent() != null),
+            // الأذان يُشغَّل على صوت المنبّه — نُنبّه إن كان منخفضاً.
+            "alarmVolumePercent" to alarmVolumePercent(),
         )
+    }
+
+    private fun alarmVolumePercent(): Int {
+        val audio = context.getSystemService(android.media.AudioManager::class.java) ?: return 100
+        val max = audio.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM)
+        if (max <= 0) return 100
+        return audio.getStreamVolume(android.media.AudioManager.STREAM_ALARM) * 100 / max
+    }
+
+    private fun openSoundSettings(): Boolean = try {
+        context.startActivity(
+            Intent(Settings.ACTION_SOUND_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+        true
+    } catch (error: Exception) {
+        Log.w(TAG, "تعذر فتح إعدادات الصوت", error)
+        false
     }
 
     private fun openExactAlarmSettings(): Boolean = try {
@@ -196,15 +219,29 @@ class AdhanChannel private constructor(private val context: Context) :
         false
     }
 
-    private fun openBatterySettings(): Boolean = try {
-        context.startActivity(
-            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-        true
-    } catch (error: Exception) {
-        Log.w(TAG, "تعذر فتح إعدادات البطارية", error)
-        openAppDetails()
+    /**
+     * يطلب استثناء يوسف من تحسين البطارية بنافذة النظام المباشرة («السماح
+     * بالعمل في الخلفية دائماً؟»). على أونر/هواوي قائمة «تحسين البطارية»
+     * العامة ومفاتيح «تشغيل التطبيقات» لا تضيف التطبيق دائماً لقائمة
+     * الاستثناء التي يقرؤها النظام (deviceidle) — النافذة المباشرة تضيفه.
+     * إن لم تتوفر النافذة: القائمة العامة، ثم تفاصيل التطبيق.
+     */
+    private fun openBatterySettings(): Boolean {
+        val direct = Intent(
+            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+            Uri.parse("package:${context.packageName}"),
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val list = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        for (intent in listOf(direct, list)) {
+            try {
+                context.startActivity(intent)
+                return true
+            } catch (error: Exception) {
+                Log.w(TAG, "تعذر فتح إعدادات البطارية: ${intent.action}", error)
+            }
+        }
+        return openAppDetails()
     }
 
     private fun findAutostartIntent(): Intent? {

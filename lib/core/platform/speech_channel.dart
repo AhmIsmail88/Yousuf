@@ -163,8 +163,8 @@ class SpeechChannel {
   SpeechAvailability a,
 ) => switch (a.reason) {
   'needs_model' when a.downloadable => (
-    ar: 'نموذج التسميع القرآني (≈١٤٨ م.ب) غير موجود بعد — اضغط «تنزيل النموذج»',
-    en: 'The Quran recitation model (≈148 MB) is not installed — tap “Download model”',
+    ar: 'نموذج التسميع القرآني (≈٨٢ م.ب) غير موجود بعد — اضغط «تنزيل النموذج»',
+    en: 'The Quran recitation model (≈82 MB) is not installed — tap “Download model”',
   ),
   'needs_model' => (
     ar: 'نموذج التسميع القرآني غير متاح في هذه النسخة بعد',

@@ -80,7 +80,14 @@ class AdhanStatus {
     this.scheduledNextEpochMs = 0,
     this.manufacturer = '',
     this.autostartSettingsAvailable = false,
+    this.alarmVolumePercent = 100,
   });
+
+  /// صوت المنبّه في الهاتف (٠–١٠٠) — الأذان يُشغَّل عليه.
+  final int alarmVolumePercent;
+
+  /// صوت المنبّه أقل من ٤٠٪: الأذان قد لا يُسمع جيداً.
+  bool get alarmVolumeLow => alarmVolumePercent < 40;
 
   final bool exactAlarmAllowed;
   final bool notificationsAllowed;
@@ -140,6 +147,7 @@ class AdhanStatus {
     manufacturer: map['manufacturer'] as String? ?? '',
     autostartSettingsAvailable:
         map['autostartSettingsAvailable'] as bool? ?? false,
+    alarmVolumePercent: (map['alarmVolumePercent'] as num?)?.toInt() ?? 100,
   );
 }
 
@@ -210,6 +218,12 @@ class AdhanChannel {
   Future<bool> requestExactAlarm() async {
     if (!isSupported) return false;
     return await _invoke<bool>('requestExactAlarm') ?? false;
+  }
+
+  /// يفتح إعدادات الصوت (لرفع صوت المنبّه).
+  Future<bool> openSoundSettings() async {
+    if (!isSupported) return false;
+    return await _invoke<bool>('openSoundSettings') ?? false;
   }
 
   Future<bool> openBatterySettings() async {

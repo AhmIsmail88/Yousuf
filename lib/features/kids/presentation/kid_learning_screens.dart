@@ -430,7 +430,23 @@ class _KidSurahMemorizeScreenState
       );
     });
     _speechSub ??= _speech.events.listen(_onSpeechEvent);
-    final started = await _speech.start();
+    // استماع حي على الآية كلها: تظهر فور اكتمالها، والخطأ يُعرف بعد سكوت قصير.
+    // نافذة بطول الآية (نحو ثانية لكل كلمة + هامش): الآية القصيرة تُحلَّل سريعاً
+    // ولا يتراكم صوت زائد، والطويلة تتسع كلها (حتى ٢٨ ث، حدّ النموذج ٣٠).
+    final words = recitationTokens(
+      stripLeadingBasmala(
+        ayah.text,
+        surahId: ayah.surahId,
+        number: ayah.number,
+      ),
+    ).where((w) => w.isNotEmpty).length;
+    final seconds = (words * 1.0 + 4).clamp(6, 28).round();
+    final started = await _speech.startLive(
+      window: Duration(seconds: seconds),
+      silenceStop: const Duration(milliseconds: 1300),
+      step: const Duration(milliseconds: 600),
+      noSpeechStop: const Duration(seconds: 8),
+    );
     if (!mounted) return;
     if (!started) {
       setState(() {
@@ -467,7 +483,7 @@ class _KidSurahMemorizeScreenState
             'نموذج التسميع غير موجود — نزّله أولاً',
             'Recitation model missing — download it first',
           ),
-          'no_match' || 'timeout' => pickPhrase(kidRetryPhrases, ++_attempts),
+          'no_match' || 'timeout' => kidWrongMessage(++_attempts),
           _ => context.tr(
             'تعذّر الاستماع — حاول مرة أخرى',
             'Could not listen — try again',
@@ -492,19 +508,31 @@ class _KidSurahMemorizeScreenState
     final target = _target;
     if (target == null) return;
 
-    final result = evaluateRecitation(
+    // الآية كاملة بالترتيب — لا تُقبل آية أخرى ولا كلام مختلف ولا نصف آية.
+    final check = checkAyahRecitation(
       heard: event.text,
-      ayahText: target.text,
-      threshold: 0.55,
+      ayahDisplayText: stripLeadingBasmala(
+        target.text,
+        surahId: target.surahId,
+        number: target.number,
+      ),
     );
-    if (result.passed) {
+    debugPrint('[YousufKids] ${event.type} $check «${event.text}»');
+    if (check.correct) {
+      // فوراً، دون انتظار سكوت: الإلغاء لا يُرسل نتيجة نهائية ثانية.
+      _target = null;
       unawaited(HapticFeedback.mediumImpact());
-      unawaited(_speech.stop());
+      unawaited(_speech.cancel());
       unawaited(_onRecited(target));
     } else if (event.type == SpeechEventKind.finalResult) {
+      _target = null;
+      unawaited(HapticFeedback.lightImpact());
       setState(() {
         _praise = false;
-        _banner = pickPhrase(kidRetryPhrases, ++_attempts);
+        _listeningId = null;
+        _banner = check.hasSpeech
+            ? kidWrongMessage(++_attempts)
+            : kidNotHeardMessage;
       });
     }
   }

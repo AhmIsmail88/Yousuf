@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../../../core/l10n/formatters.dart';
 import '../../../core/l10n/tr.dart';
 import '../../../core/platform/adhan_channel.dart';
 
@@ -145,6 +146,20 @@ class _AdhanReadinessPanelState extends State<AdhanReadinessPanel>
         actionLabel: context.tr('فتح الإعدادات', 'Open settings'),
         onAction: () => _run(() => AdhanChannel().openBatterySettings()),
       ),
+      if (status != null && status.alarmVolumeLow)
+        _ReadinessRow(
+          dense: widget.dense,
+          title: context.tr('صوت المنبّه', 'Alarm volume'),
+          hint: context.tr(
+            'الأذان يعمل على صوت المنبّه، وهو الآن '
+                '${context.digits(status.alarmVolumePercent)}٪ — ارفعه ليُسمع جيداً',
+            'The adhan uses the alarm volume, now at '
+                '${status.alarmVolumePercent}% — raise it',
+          ),
+          ok: false,
+          actionLabel: context.tr('فتح الإعدادات', 'Open settings'),
+          onAction: () => _run(() => AdhanChannel().openSoundSettings()),
+        ),
       if (status != null && status.aggressiveOem)
         _ReadinessRow(
           dense: widget.dense,

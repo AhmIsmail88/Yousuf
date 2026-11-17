@@ -16,7 +16,7 @@ data class AdhanConfig(
     val prayerSounds: Map<String, Map<String, String>> = emptyMap(),
     val prePrayerAlertMinutes: Int = 15,
     val iqamaReminderMinutes: Int = 0,
-    val respectSilentMode: Boolean = true,
+    val respectSilentMode: Boolean = false,
 ) {
     /** نوع التنبيه لصلاة: full | takbir | notification | off. */
     fun modeFor(prayer: String): String = prayerSounds[prayer]?.get("mode") ?: "full"
@@ -73,7 +73,7 @@ data class AdhanConfig(
                 prayerSounds = sounds,
                 prePrayerAlertMinutes = o.optInt("prePrayerAlertMinutes", 15),
                 iqamaReminderMinutes = o.optInt("iqamaReminderMinutes", 0),
-                respectSilentMode = o.optBoolean("respectSilentMode", true),
+                respectSilentMode = o.optBoolean("respectSilentMode", false),
             )
         }.getOrNull()
 

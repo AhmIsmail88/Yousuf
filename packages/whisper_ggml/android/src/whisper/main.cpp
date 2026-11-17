@@ -194,6 +194,11 @@ json transcribe(json jsonBody) noexcept
     {
         params.speed_up = jsonBody["speed_up"].get<bool>();
     }
+    // Yousuf patch: honour "no_fallback" (the Dart field existed but was ignored).
+    if (jsonBody.contains("no_fallback") && jsonBody["no_fallback"].is_boolean())
+    {
+        params.no_fallback = jsonBody["no_fallback"].get<bool>();
+    }
     if (jsonBody.contains("keep_model_loaded") && jsonBody["keep_model_loaded"].is_boolean())
     {
         params.keep_model_loaded = jsonBody["keep_model_loaded"].get<bool>();
@@ -404,8 +409,17 @@ json transcribe(json jsonBody) noexcept
         // Yousuf patch: whisper pads every clip to 30 s and runs the encoder
         // over all of it. For short live clips, limit the encoder context to
         // the real audio length (+ margin) — several times faster.
+        // Yousuf patch: no temperature fallback — on noisy clips it re-decodes
+        // up to 5 times, multiplying latency, and a live caller simply retries
+        // on the next clip.
+        if (params.no_fallback) {
+            wparams.temperature_inc = 0.0f;
+        }
         if (params.speed_up) {
             const double secs = double(pcmf32.size()) / WHISPER_SAMPLE_RATE;
+            // Recitation is ~2-3 words/s; cap tokens so a hallucination loop
+            // (repeating a phrase) cannot run away.
+            wparams.max_tokens = (int)(secs * 12.0) + 24;
             if (secs < 29.0) {
                 int audio_ctx = (int)(secs / 30.0 * 1500.0) + 64;
                 if (audio_ctx < 256) audio_ctx = 256;

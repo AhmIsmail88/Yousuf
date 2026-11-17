@@ -104,8 +104,9 @@ void main() {
   testWidgets('يعرض الباب والعدّ حتى الاكتمال مع حفظ التقدّم', (tester) async {
     final prefs = await pumpScreen(tester);
 
-    // القسم الافتراضي «أدعية القرآن» فارغ في هذه القاعدة الصغيرة.
-    final morningChip = find.text('أذكار الصباح والمساء');
+    // القسم الافتراضي (الصباح أو المساء حسب الوقت) قد لا يكون المختار هنا.
+    // الاسم قد يظهر مرتين (الشريحة وعنوان الباب إن كان مختاراً) — الشريحة أولاً.
+    final morningChip = find.text('أذكار الصباح والمساء').first;
     await tester.ensureVisible(morningChip);
     await tester.tap(morningChip);
     await tester.pumpAndSettle();

@@ -7,55 +7,146 @@ import 'package:yousuf/core/l10n/tr.dart';
 import '../data/books_repository.dart';
 import '../data/library_store.dart';
 import '../domain/library_catalog.dart';
+import '../../kids/presentation/tuhfa_screen.dart';
 
-/// المكتبة: كتب السيرة والتاريخ. يُنزَّل الكتاب مرة ثم يُقرأ دون إنترنت،
-/// صفحةً صفحة مع فهرس فصوله وحفظ آخر موضع.
+/// المكتبة: تبويب لكل قسم (الأذكار، المتون، السيرة والتاريخ…). يُنزَّل
+/// الكتاب مرة ثم يُقرأ دون إنترنت، صفحةً صفحة مع فهرس فصوله وحفظ آخر موضع.
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final downloaded =
         ref.watch(downloadedLibraryProvider).value ?? const <String>{};
     final progress = ref.watch(libraryDownloadsProvider);
-    final categories = <String>[];
-    for (final book in libraryCatalog) {
-      if (!categories.contains(book.category)) categories.add(book.category);
-    }
+    // تبويب بلا كتب لا يظهر — إلا «المتون» ففيه تحفة الأطفال المضمّنة.
+    final sections = [
+      for (final section in librarySections)
+        if (section == _mutun ||
+            libraryCatalog.any((b) => b.section == section))
+          section,
+    ];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('السيرة والتاريخ', 'Seerah & history')),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
-            child: Text(
-              context.tr(
-                'يُنزَّل الكتاب مرة واحدة ثم يُقرأ دون إنترنت',
-                'Download once, read offline',
-              ),
-              style: theme.textTheme.labelSmall,
-            ),
+    return DefaultTabController(
+      length: sections.length,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(context.tr('المكتبة', 'Library')),
+          bottom: TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: [for (final section in sections) Tab(text: section)],
           ),
-          for (final category in categories) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
-              child: Text(category, style: theme.textTheme.titleSmall),
-            ),
-            for (final book in libraryCatalog.where(
-              (b) => b.category == category,
-            ))
-              _LibraryTile(
-                book: book,
-                downloaded: downloaded.contains(book.slug),
-                progress: progress[book.slug],
+        ),
+        body: TabBarView(
+          children: [
+            for (final section in sections)
+              _SectionList(
+                section: section,
+                downloaded: downloaded,
+                progress: progress,
               ),
           ],
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+const String _mutun = 'المتون';
+const String _islamWest = 'الإسلام والغرب';
+
+class _SectionList extends StatelessWidget {
+  const _SectionList({
+    required this.section,
+    required this.downloaded,
+    required this.progress,
+  });
+
+  final String section;
+  final Set<String> downloaded;
+  final Map<String, double> progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final books = libraryCatalog.where((b) => b.section == section);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+          child: Text(
+            context.tr(
+              'يُنزَّل الكتاب مرة واحدة ثم يُقرأ دون إنترنت',
+              'Download once, read offline',
+            ),
+            style: theme.textTheme.labelSmall,
+          ),
+        ),
+        if (section == _islamWest)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+            child: Text(
+              context.tr(
+                'نصوص مستخرجة آلياً من نسخ مصوّرة — قد يقع فيها خطأ مطبعي',
+                'Text extracted from scanned copies — may contain typos',
+              ),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.tertiary,
+              ),
+            ),
+          ),
+        if (section == _mutun) const _TuhfaTile(),
+        for (final book in books)
+          _LibraryTile(
+            book: book,
+            downloaded: downloaded.contains(book.slug),
+            progress: progress[book.slug],
+          ),
+      ],
+    );
+  }
+}
+
+/// تحفة الأطفال: متن مضمّن في التطبيق (مع صوته في قسم الأطفال).
+class _TuhfaTile extends StatelessWidget {
+  const _TuhfaTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: scheme.surfaceContainerLow,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: scheme.outlineVariant),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+          leading: Icon(Icons.menu_book, color: scheme.primary, size: 30),
+          title: Text(
+            'تحفة الأطفال والغلمان',
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontFamily: 'Amiri'),
+          ),
+          subtitle: Text(
+            context.tr(
+              'سليمان الجمزوري · في أحكام التجويد',
+              'al-Jamzuri · tajweed rules',
+            ),
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => const TuhfaScreen())),
+        ),
       ),
     );
   }
@@ -117,7 +208,17 @@ class _LibraryTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
-    final size = context.digits((book.bytes / 1048576).toStringAsFixed(1));
+    // أقل من ميجابايت يُعرض بالكيلوبايت («٣٢ ك.ب» بدل «٠٫٠ م.ب»).
+    final small = book.bytes < 1048576;
+    final size = small
+        ? context.tr(
+            '${context.digits((book.bytes / 1024).round())} ك.ب',
+            '${(book.bytes / 1024).round()} KB',
+          )
+        : context.tr(
+            '${context.digits((book.bytes / 1048576).toStringAsFixed(1))} م.ب',
+            '${(book.bytes / 1048576).toStringAsFixed(1)} MB',
+          );
     final pages = context.tr(
       '${context.digits(book.pages)} صفحة',
       '${book.pages} pages',
@@ -165,8 +266,8 @@ class _LibraryTile extends ConsumerWidget {
             downloaded
                 ? '${book.author} · $pages'
                 : context.tr(
-                    '${book.author} · $pages · للتنزيل $size م.ب',
-                    '${book.author} · $pages · $size MB',
+                    '${book.author} · $pages · للتنزيل $size',
+                    '${book.author} · $pages · $size',
                   ),
           ),
           trailing: trailing,

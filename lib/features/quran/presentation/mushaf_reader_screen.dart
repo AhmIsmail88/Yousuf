@@ -751,7 +751,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
       );
     });
     _speechSub ??= _speech.events.listen(_onSpeechEvent);
-    final started = await _speech.startLive();
+    final started = await _speech.startLive(prompt: _recitedContext());
     if (!mounted) return;
     setState(() {
       _listening = started;
@@ -845,6 +845,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
           }
         }
         _hifzPos = next;
+        _speech.prompt = _recitedContext();
         _hifzProgressed = true;
         _attempts = 0;
         _hifzPraise = completed;
@@ -877,6 +878,18 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
         }
       });
     }
+  }
+
+  /// آخر الكلمات المتلوّة (حتى ١٢) — تُعطى للنموذج سياقاً ليتابع التلاوة.
+  /// لا يدخل فيها ما لم يُتلَ بعد، حتى لا «يُكمله» النموذج من عنده.
+  String? _recitedContext() {
+    if (_hifzPos == 0) return null;
+    final from = _hifzPos > 12 ? _hifzPos - 12 : 0;
+    final words = [
+      for (var i = from; i < _hifzPos; i++)
+        if (_hifzWords[i].word.isNotEmpty) _hifzWords[i].word.split('|').last,
+    ];
+    return words.isEmpty ? null : words.join(' ');
   }
 
   /// كشف يدوي للآية التالية (عند غياب محرّك التعرّف).
